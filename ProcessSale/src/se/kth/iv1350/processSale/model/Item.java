@@ -46,7 +46,7 @@ public class Item {
      */
     public void increaseQuantity(int newQuantity){
         this.quantity += newQuantity;
-        this.price = (itemIdentifier % 1000)*quantity;
+        this.price = retrievePrice(itemIdentifier)*quantity;
     }
     /**
      * Sets the quantity of which the item is grouped with, and adjusts the price.
@@ -54,7 +54,7 @@ public class Item {
      */
     public void setQuantity(int quantity){
         this.quantity = quantity;
-        this.price = (itemIdentifier % 1000)*quantity;
+        this.price = retrievePrice(itemIdentifier)*quantity;
     }
 
     /**

@@ -9,7 +9,7 @@ public class Display {
      * @param text The text that is to be written out.
      */
     static public void displayText(String text){
-        System.out.println("Itemdescription: " + text);
+        System.out.println("Item description: " + text);
     }
 
     /**
