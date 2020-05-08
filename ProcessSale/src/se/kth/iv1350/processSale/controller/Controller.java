@@ -4,7 +4,11 @@ import se.kth.iv1350.processSale.startup.*;
 
 import se.kth.iv1350.processSale.model.*;
 
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.InvalidPreferencesFormatException;
 
 /**
  * A controller which controls the actions of the cashier system.
@@ -13,11 +17,12 @@ public class Controller {
     private Transaction sale;
     private double discountPercentage = 1;
     private int customerID;
-    private int cashierRegister = 5000;
+    private Money cashierRegister = new Money(5000);
+    private List<RevenueObserver> revenueObservers = new ArrayList<>();
 
-
-    private static final int EIGHT_FIGURE_NUMBER_MINIMUM = 10000000;
-    private static final int EIGHT_FIGURE_NUMBER_MAXIMUM = 99999999;
+    private final int EIGHT_FIGURE_NUMBER_MINIMUM   = 10000000;
+    private final int EIGHT_FIGURE_NUMBER_MAXIMUM   = 99999999;
+    private final int SIMULATED_ERROR_VALUE         = 22222222;
 
     /**
      * Starts the by creating a new <code>Transaction</code>, generating a customer ID and checking for discount.
@@ -27,6 +32,7 @@ public class Controller {
         this.sale = sale;
         this.customerID = setCustomerID();
         this.discountPercentage = setDiscountPercentage(this.customerID);
+        sale.addRevenueObservers(revenueObservers);
     }
 
     /**
@@ -34,23 +40,29 @@ public class Controller {
      * @param itemIdentifier The value that represents the item.
      * @param quantity The quantity of which the item has.
      */
-    public void registerItem(int itemIdentifier, int quantity){
-        if(itemIdentifierValidity(itemIdentifier)) {
-            Item item = new Item(itemIdentifier);
-            sale.registerItem(item, quantity);
-            Display.displayText(item.getItemDescription());
-            Display.displayPrice(sale.getTotalPrice());
-        }
-        else Display.displayText("No such item");
+    public void registerItem(int itemIdentifier, int quantity) throws IncorrectItemIdentifierException, NoConnectionException {
+        itemIdentifierValidity(itemIdentifier);
+        Item item = new Item(itemIdentifier);
+        sale.registerItem(item, quantity);
+        Display.displayText(item.getItemDescription());
+        Display.displayPrice(sale.getTotalPrice());
     }
 
     /**
-     * Checks if the item exists.
+     * Checks if the item exists. Runs a unchecked exception check. Also have a database exception added for a simulated scenario.
      * @param itemIdentifier The value that is being checked, representing the item.
      * @return Returns true or false depending on the result
      */
-    private boolean itemIdentifierValidity(int itemIdentifier){
-        return itemIdentifier < EIGHT_FIGURE_NUMBER_MAXIMUM && itemIdentifier > EIGHT_FIGURE_NUMBER_MINIMUM;
+    private void itemIdentifierValidity(int itemIdentifier) throws IncorrectItemIdentifierException, NoConnectionException {
+        if(itemIdentifier == SIMULATED_ERROR_VALUE)
+            throw new NoConnectionException("Could not update item register", new IOException());
+        else if(itemIdentifier < EIGHT_FIGURE_NUMBER_MAXIMUM && itemIdentifier > EIGHT_FIGURE_NUMBER_MINIMUM)
+        {
+            return;
+        }
+        else {
+            throw new IncorrectItemIdentifierException("No such item", new SQLException());
+        }
     }
 
     /**
@@ -84,14 +96,17 @@ public class Controller {
      * @param payment The amount being paid.
      * @return Returns the change.
      */
-    public int registerTransaction(int payment){
+    public int registerTransaction(Money payment){
         AccountingSystem.updateAccountingSystem(sale);
         ExternalInventorySystem.updateExternalInventorySystem(sale);
         Receipt receipt = new Receipt(sale);
         Printer.printReceipt(receipt);
-        this.cashierRegister += sale.getTotalPrice();
-        return payment - sale.getTotalPrice();
+        cashierRegister.addMoney(sale.getTotalPrice());
+        payment.subtractMoney(sale.getTotalPrice());
+        sale.notifyObservers(payment);
+        return payment.getAmount();
     }
+
 
     /**
      * Returns a list of item in the current transaction
@@ -119,5 +134,13 @@ public class Controller {
     private double setDiscountPercentage(int customerID){
         this.discountPercentage = Discount.getDiscountRate(customerID);
         return discountPercentage;
+    }
+
+    /**
+     * Adds a new Revenue Observer.
+     * @param obs The observer being added.
+     */
+    public void addRevenueObserver(RevenueObserver obs){
+        revenueObservers.add(obs);
     }
 }

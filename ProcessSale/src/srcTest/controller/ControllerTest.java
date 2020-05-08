@@ -5,7 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import se.kth.iv1350.processSale.controller.Controller;
+import se.kth.iv1350.processSale.model.IncorrectItemIdentifierException;
 import se.kth.iv1350.processSale.model.Item;
+import se.kth.iv1350.processSale.model.NoConnectionException;
 
 import java.util.List;
 
@@ -40,10 +42,11 @@ class ControllerTest {
 
     @Test
     void testRegisterItem() {
-        controller.registerItem(itemIdentifier1, 1);
-        controller.registerItem(itemIdentifier2, 2);
-        controller.registerItem(incorrectItemIdentifier1, 1);
-        controller.registerItem(incorrectItemIdentifier2, 1);
+            registerItem(itemIdentifier1, 1);
+            registerItem(itemIdentifier2, 2);
+            registerItem(incorrectItemIdentifier1, 1);
+            registerItem(incorrectItemIdentifier2, 1);
+
 
         List<Item> itemRegistry = controller.getItemRegistry();
 
@@ -52,5 +55,17 @@ class ControllerTest {
         assertEquals(itemRegistry.get(0).getItemIdentifier(), item1.getItemIdentifier(), "The first item is not the same");
         assertEquals(itemRegistry.get(1).getItemIdentifier(), item2.getItemIdentifier(), "The second item is not the same");
         assertEquals(itemRegistry.size(), 2, "The amount of items is not correct");
+    }
+
+    private void registerItem(int itemIdentifier, int quantity) {
+        try {
+            controller.registerItem(itemIdentifier, quantity);
+
+        } catch (IncorrectItemIdentifierException exc) {
+            System.out.println("VIEW: No such item");
+        } catch (NoConnectionException exc) {
+            System.out.println("VIEW: Error registering item, try again later");
+            System.out.println("DEVLOG: " + exc.getCause());
+        }
     }
 }

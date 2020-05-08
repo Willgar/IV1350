@@ -13,6 +13,7 @@ public class Transaction {
     private List<Item> itemRegistry = new ArrayList<Item>();
     private Receipt receipt;
     private double discountRate;
+    private List<RevenueObserver> revenueObservers = new ArrayList<>();
 
     /**
      * Creates a new transaction at the specified store.
@@ -73,6 +74,16 @@ public class Transaction {
             total += item.getPrice();
         }
         return total;
+    }
+
+    public void addRevenueObservers(List<RevenueObserver> obs){
+        this.revenueObservers = obs;
+    }
+
+    public void notifyObservers(Money payment){
+        for(RevenueObserver obs : revenueObservers){
+            obs.newPayment(payment);
+        }
     }
 
     /**
