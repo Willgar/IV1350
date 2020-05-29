@@ -54,9 +54,10 @@ class TransactionTest {
 
         List<Item> comparisonList = new ArrayList<Item>();
         comparisonList.add(item2);
+        assertEquals(saleList.get(0), comparisonList.get(0), "The first item in the lists are not the same");
+
         comparisonList.add(item3);
 
-        assertEquals(saleList.get(0), comparisonList.get(0), "The first item in the lists are not the same");
         assertEquals(saleList.get(1), comparisonList.get(1), "The second item in the lists are not the same");
 
     }

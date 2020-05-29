@@ -9,7 +9,7 @@ public class Discount {
      * @param customerID The value being checked to see if eligble and if so, for how much.
      * @return Returns the rate which the price will be adjusted after.
      */
-    static public double getDiscountRate(int customerID){
+    public double getDiscountRate(int customerID){
         if(checkDiscountEligibility(customerID)){
             return discountPercentage(customerID);
         }
@@ -21,7 +21,7 @@ public class Discount {
      * @param customerID The value being checked.
      * @return Returns a true or false statement depending on the result.
      */
-    static private boolean checkDiscountEligibility(int customerID){
+    private boolean checkDiscountEligibility(int customerID){
         return OddOrEvenCustomerID(customerID);
     }
 
@@ -30,7 +30,7 @@ public class Discount {
      * @param customerID The value being checked.
      * @return Returns true or false depending on the result.
      */
-    static private boolean OddOrEvenCustomerID(int customerID){
+    private boolean OddOrEvenCustomerID(int customerID){
         return customerID % 2 == 1;
     }
 
@@ -39,10 +39,9 @@ public class Discount {
      * @param customerID The value being checked.
      * @return Returns the discount rate.
      */
-    static private double  discountPercentage(int customerID){
+    private double discountPercentage(int customerID){
         double step1 = (customerID%10);
         double step2 = step1/100;
-        double step3 = 1-step2;
-        return step3;
+        return 1-step2;
     }
 }

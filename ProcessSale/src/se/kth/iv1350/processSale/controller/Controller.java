@@ -1,14 +1,10 @@
 package se.kth.iv1350.processSale.controller;
 import se.kth.iv1350.processSale.integration.*;
-import se.kth.iv1350.processSale.startup.*;
 
 import se.kth.iv1350.processSale.model.*;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.prefs.InvalidPreferencesFormatException;
 
 /**
  * A controller which controls the actions of the cashier system.
@@ -19,18 +15,30 @@ public class Controller {
     private int customerID;
     private Money cashierRegister = new Money(5000);
     private List<RevenueObserver> revenueObservers = new ArrayList<>();
-
-    private final int EIGHT_FIGURE_NUMBER_MINIMUM   = 10000000;
-    private final int EIGHT_FIGURE_NUMBER_MAXIMUM   = 99999999;
-    private final int SIMULATED_ERROR_VALUE         = 22222222;
+    private ExternalInventorySystem ExtInvSys;
+    private Discount discount = new Discount();
 
     /**
-     * Starts the by creating a new <code>Transaction</code>, generating a customer ID and checking for discount.
+     * Starts the sale by creating a new <code>Transaction</code>, generating a customer ID and checking for discount.
      */
     public void startSale(){
         Transaction sale = new Transaction("coop", "placeholder 42");
         this.sale = sale;
         this.customerID = setCustomerID();
+        this.discountPercentage = setDiscountPercentage(this.customerID);
+        sale.addRevenueObservers(revenueObservers);
+        this.ExtInvSys = new ExternalInventorySystem();
+
+    }
+
+    /**
+     * Starts the sale by creating a new Transaction, with a predetermined customer ID and checks for the discount.
+     * @param customerID
+     */
+    public void startSale(int customerID){
+        Transaction sale = new Transaction("coop", "placeholder 42");
+        this.sale = sale;
+        this.customerID = customerID;
         this.discountPercentage = setDiscountPercentage(this.customerID);
         sale.addRevenueObservers(revenueObservers);
     }
@@ -39,31 +47,19 @@ public class Controller {
      * Registers a type of item and the quantity of it. Also displays the item description if it exists and the current total price.
      * @param itemIdentifier The value that represents the item.
      * @param quantity The quantity of which the item has.
+     * @throws IncorrectItemIdentifierException If incorrect itemidentifier value is given.
+     * @throws NoConnectionException If there is no connection to the database.
      */
     public void registerItem(int itemIdentifier, int quantity) throws IncorrectItemIdentifierException, NoConnectionException {
-        itemIdentifierValidity(itemIdentifier);
+        ExtInvSys.itemIdentifierValidity(itemIdentifier);
         Item item = new Item(itemIdentifier);
         sale.registerItem(item, quantity);
         Display.displayText(item.getItemDescription());
         Display.displayPrice(sale.getTotalPrice());
     }
 
-    /**
-     * Checks if the item exists. Runs a unchecked exception check. Also have a database exception added for a simulated scenario.
-     * @param itemIdentifier The value that is being checked, representing the item.
-     * @return Returns true or false depending on the result
-     */
-    private void itemIdentifierValidity(int itemIdentifier) throws IncorrectItemIdentifierException, NoConnectionException {
-        if(itemIdentifier == SIMULATED_ERROR_VALUE)
-            throw new NoConnectionException("Could not update item register", new IOException());
-        else if(itemIdentifier < EIGHT_FIGURE_NUMBER_MAXIMUM && itemIdentifier > EIGHT_FIGURE_NUMBER_MINIMUM)
-        {
-            return;
-        }
-        else {
-            throw new IncorrectItemIdentifierException("No such item", new SQLException());
-        }
-    }
+
+
 
     /**
      * Applies the discount to the current <code>Transaction</code>
@@ -92,21 +88,20 @@ public class Controller {
     }
 
     /**
-     * Registers the transaction into external systems and takes the payment and returns the change.
+     * Registers the transaction into external systems and takes the payment and returns the change. The sale is fully completed after this.
      * @param payment The amount being paid.
      * @return Returns the change.
      */
     public int registerTransaction(Money payment){
+        Money saleTotal = sale.finalizeSale();
         AccountingSystem.updateAccountingSystem(sale);
-        ExternalInventorySystem.updateExternalInventorySystem(sale);
+        ExtInvSys.updateExternalInventorySystem(sale);
         Receipt receipt = new Receipt(sale);
         Printer.printReceipt(receipt);
-        cashierRegister.addMoney(sale.getTotalPrice());
+        cashierRegister.addMoney(saleTotal);
         payment.subtractMoney(sale.getTotalPrice());
-        sale.notifyObservers(payment);
         return payment.getAmount();
     }
-
 
     /**
      * Returns a list of item in the current transaction
@@ -117,10 +112,20 @@ public class Controller {
     }
 
     /**
+     * Returns the total price of the transaction so far.
+     * @return returns an integer with the total.
+     */
+    public int getTotalPrice(){
+        return sale.getTotalPrice();
+    }
+
+    /**
      * Creates a customer ID.
      * @return Returns the value of the customer id.
      */
     private int setCustomerID(){
+        int EIGHT_FIGURE_NUMBER_MINIMUM = 10000000;
+        int EIGHT_FIGURE_NUMBER_MAXIMUM = 99999999;
         int customerID = (int)(Math.random() * ((EIGHT_FIGURE_NUMBER_MAXIMUM - EIGHT_FIGURE_NUMBER_MINIMUM) + 1)) + EIGHT_FIGURE_NUMBER_MINIMUM;
         System.out.println("Your customer ID is " + customerID);
         return customerID;
@@ -132,7 +137,7 @@ public class Controller {
      * @return Returns the discount rate.
      */
     private double setDiscountPercentage(int customerID){
-        this.discountPercentage = Discount.getDiscountRate(customerID);
+        this.discountPercentage = discount.getDiscountRate(customerID);
         return discountPercentage;
     }
 

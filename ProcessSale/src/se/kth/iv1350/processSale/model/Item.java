@@ -1,6 +1,7 @@
 package se.kth.iv1350.processSale.model;
 
-import static se.kth.iv1350.processSale.integration.ExternalInventorySystem.*;
+
+import se.kth.iv1350.processSale.integration.ExternalInventorySystem;
 
 /**
  * An item containing the items identifier value, the price of the item, an description of the item and the quantity of which the item is grouped with.
@@ -11,6 +12,7 @@ public class Item {
     private String itemDescription;
     private int quantity;
     private int VATRate;
+    private ExternalInventorySystem ExtInvSys = new ExternalInventorySystem();
 
     /**
      * Creates a new item based on the value of the <code>itemIdentifier</code>.
@@ -19,9 +21,9 @@ public class Item {
     public Item(int itemIdentifier){
         this.itemIdentifier = itemIdentifier;
         this.quantity = 1;
-        this.price = retrievePrice(itemIdentifier)*quantity;
-        this.VATRate = retrieveVATRate(itemIdentifier);
-        this.itemDescription = retrieveItemDescription(itemIdentifier);
+        this.price = ExtInvSys.retrievePrice(itemIdentifier)*quantity;
+        this.VATRate = ExtInvSys.retrieveVATRate(itemIdentifier);
+        this.itemDescription = ExtInvSys.retrieveItemDescription(itemIdentifier);
     }
 
     /**
@@ -46,7 +48,7 @@ public class Item {
      */
     public void increaseQuantity(int newQuantity){
         this.quantity += newQuantity;
-        this.price = retrievePrice(itemIdentifier)*quantity;
+        this.price = ExtInvSys.retrievePrice(itemIdentifier)*quantity;
     }
     /**
      * Sets the quantity of which the item is grouped with, and adjusts the price.
@@ -54,7 +56,7 @@ public class Item {
      */
     public void setQuantity(int quantity){
         this.quantity = quantity;
-        this.price = retrievePrice(itemIdentifier)*quantity;
+        this.price = ExtInvSys.retrievePrice(itemIdentifier)*quantity;
     }
 
     /**

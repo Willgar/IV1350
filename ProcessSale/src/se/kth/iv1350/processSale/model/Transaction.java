@@ -2,7 +2,6 @@ package se.kth.iv1350.processSale.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import se.kth.iv1350.processSale.controller.*;
 
 /**
  * A transaction containing information about the store, the items registred to the sale, the receit and a discount rate.
@@ -10,7 +9,7 @@ import se.kth.iv1350.processSale.controller.*;
 public class Transaction {
     private String storeName;
     private String storeAddress;
-    private List<Item> itemRegistry = new ArrayList<Item>();
+    private List<Item> itemRegistry;
     private Receipt receipt;
     private double discountRate;
     private List<RevenueObserver> revenueObservers = new ArrayList<>();
@@ -21,6 +20,7 @@ public class Transaction {
      * @param storeAddress The address of the store which the <code>Transaction</code> occurs
      */
     public Transaction(String storeName, String storeAddress){
+        itemRegistry = new ArrayList<Item>();
         this.storeName = storeName;
         this.storeAddress = storeAddress;
     }
@@ -80,12 +80,17 @@ public class Transaction {
         this.revenueObservers = obs;
     }
 
-    public void notifyObservers(Money payment){
+    private void notifyObservers(Money payment){
         for(RevenueObserver obs : revenueObservers){
             obs.newPayment(payment);
         }
     }
 
+    public Money finalizeSale(){
+        Money totalSale = new Money(getTotalPrice());
+        notifyObservers(totalSale);
+        return totalSale;
+    }
     /**
      * Calculates the percentage of which has been removed from the original price.
      * @return Returns the value of the discount rate.

@@ -28,13 +28,10 @@ public class View {
     public void testRun() {
         contr.startSale();
 
-
         registerItem(82145252, 1);
         registerItem(56791275, 2);
         registerItem(22222222, 2);
         registerItem(931234100, 2);
-
-
 
         contr.applyDiscount();
         contr.finalizeSale();

@@ -31,6 +31,14 @@ public class Money {
     }
 
     /**
+     * Adds more money.
+     * @param amount The amount added
+     */
+    public void addMoney(Money amount){
+        this.amount += amount.getAmount();
+    }
+
+    /**
      * Subtracts money.
      * @param amount The amount subtracted
      */

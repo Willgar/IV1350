@@ -1,16 +1,43 @@
 package se.kth.iv1350.processSale.integration;
 
+import se.kth.iv1350.processSale.model.IncorrectItemIdentifierException;
+import se.kth.iv1350.processSale.model.NoConnectionException;
 import se.kth.iv1350.processSale.model.Transaction;
+
+import java.io.IOException;
+import java.sql.SQLException;
 
 /**
  * A external inventory system containing information about the items.
  */
 public class ExternalInventorySystem {
+    private final int EIGHT_FIGURE_NUMBER_MINIMUM   = 10000000;
+    private final int EIGHT_FIGURE_NUMBER_MAXIMUM   = 99999999;
+    private final int SIMULATED_ERROR_VALUE         = 22222222;
+
+    /**
+     * Checks if the item exists. Runs a unchecked exception check. Also have a database exception added for a simulated scenario.
+     * @param itemIdentifier The value that is being checked, representing the item.
+     * @return Returns true or false depending on the result
+     * @throws IncorrectItemIdentifierException If incorrect itemidentifier value is given.
+     * @throws NoConnectionException If there is no connection to the database.
+     */
+    public void itemIdentifierValidity(int itemIdentifier) throws IncorrectItemIdentifierException, NoConnectionException {
+        if(itemIdentifier == SIMULATED_ERROR_VALUE)
+            throw new NoConnectionException("Could not update item register", new IOException());
+        else if(itemIdentifier < EIGHT_FIGURE_NUMBER_MAXIMUM && itemIdentifier > EIGHT_FIGURE_NUMBER_MINIMUM)
+        {
+            return;
+        }
+        else {
+            throw new IncorrectItemIdentifierException("No such item", new SQLException());
+        }
+    }
     /**
      * Updates the system based on the items in the transaction.
      * @param sale The items being bought.
      */
-    public static void updateExternalInventorySystem(Transaction sale){
+    public void updateExternalInventorySystem(Transaction sale){
         System.out.println("*Updating external inventory system");
     }
 
@@ -19,7 +46,7 @@ public class ExternalInventorySystem {
      * @param itemIdentifier The value that represents the item.
      * @return Returns the price.
      */
-    static public int retrievePrice(int itemIdentifier){
+    public int retrievePrice(int itemIdentifier){
         return (itemIdentifier % 1000);
     }
 
@@ -28,7 +55,7 @@ public class ExternalInventorySystem {
      * @param itemIdentifier The value that represents the item.
      * @return Returns the VAT rate.
      */
-    public static int retrieveVATRate(int itemIdentifier){
+    public int retrieveVATRate(int itemIdentifier){
         int itemIdentifierValue = itemIdentifier % 10;
         if(itemIdentifierValue < 3){
             return 6;
@@ -44,7 +71,7 @@ public class ExternalInventorySystem {
      * @param itemIdentifier The value that represents the item.
      * @return Returns an item description.
      */
-    public static String retrieveItemDescription(int itemIdentifier){
+    public String retrieveItemDescription(int itemIdentifier){
         int itemIdentifierValue = itemIdentifier % 100;
         if(itemIdentifierValue < 10){
             return "An electrical product";
